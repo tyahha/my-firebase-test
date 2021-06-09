@@ -55,11 +55,12 @@ export const uploadVideo = functions
 
         try {
           const promise = drive.files.create({
+            supportsAllDrives: true,
             requestBody: {
               mimeType,
               name: filename,
-              // parents: ["1eRnOpP12c0TvEpjF7Ur7vdGcObkulX54"],
-              parents: ["1mmdRGs9QvTzhs_GDutnyG1dlZeoLMRDH"],
+              parents: ["1eRnOpP12c0TvEpjF7Ur7vdGcObkulX54"],
+              // parents: ["1mmdRGs9QvTzhs_GDutnyG1dlZeoLMRDH"],
             },
             media: {
               mimeType,
