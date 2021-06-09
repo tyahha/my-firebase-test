@@ -1,23 +1,27 @@
 import * as functions from "firebase-functions"
-//import { google } from "googleapis"
+import { google } from "googleapis"
 import * as Busboy from "busboy"
 
 // Start writing Firebase Functions
 // https://firebase.google.com/docs/functions/typescript
 
+const logger = functions.logger
+
 export const uploadVideo = functions
   .region("asia-northeast1")
-  .https.onRequest((request, response) => {
-    //const drive = google.drive({ version: "v3" })
-    functions.logger.info("test log", 1)
+  .https.onRequest(async (request, response) => {
+    logger.info("test log", 1)
 
     // CORS
-    if (request.method === "OPTIONS") {
+    if (request.method === "OPTIONS" || request.method === "POST") {
       response.header("Access-Control-Allow-Origin", "*")
       response.header("Access-Control-Allow-Headers", "Content-Type")
       response.header("Access-Control-Allow-Methods", "POST")
-      response.status(200).end()
-      return
+
+      if (request.method === "OPTIONS") {
+        response.status(200).end()
+        return
+      }
     }
 
     if (request.method !== "POST") {
@@ -25,38 +29,74 @@ export const uploadVideo = functions
       return
     }
 
-    functions.logger.info("test log", 2)
+    logger.info("test log", 2)
 
     try {
+      const auth = new google.auth.GoogleAuth({
+        scopes: [
+          "https://www.googleapis.com/auth/drive",
+          "https://www.googleapis.com/auth/drive.file",
+          "https://www.googleapis.com/auth/drive.appdata",
+        ],
+      })
+      const drive = google.drive({ version: "v3", auth })
       const busboy = new Busboy({ headers: request.headers })
 
-      functions.logger.info("test log", 3)
+      logger.info("test log", 3)
 
-      busboy.on("file", (fieldName, file, filename, encoding, mimetype) => {
-        functions.logger.info("----- upload file ------")
-        functions.logger.info("field name", fieldName)
-        functions.logger.info("filename", filename)
-        functions.logger.info("encoding", encoding)
-        functions.logger.info("mimetype", mimetype)
+      const fileUploads: Promise<unknown>[] = []
+
+      busboy.on("file", async (fieldName, file, filename, encoding, mimeType) => {
+        logger.info("----- upload file ------")
+        logger.info("field name", fieldName)
+        logger.info("filename", filename)
+        logger.info("encoding", encoding)
+        logger.info("mimetype", mimeType)
+
+        try {
+          const promise = drive.files.create({
+            requestBody: {
+              mimeType,
+              name: filename,
+              // parents: ["1eRnOpP12c0TvEpjF7Ur7vdGcObkulX54"],
+              parents: ["1mmdRGs9QvTzhs_GDutnyG1dlZeoLMRDH"],
+            },
+            media: {
+              mimeType,
+              body: file,
+            },
+          })
+
+          fileUploads.push(promise)
+        } catch (e) {
+          logger.error(`error while uploding file [${filename}]`, e)
+        }
       })
 
-      functions.logger.info("Hello logs!", { structuredData: true })
-      response.status(200).send("Hello from Firebase!")
+      logger.info("Hello logs!", { structuredData: true })
 
       // This callback will be invoked after all uploaded files are saved.
       busboy.on("finish", () => {
-        functions.logger.info("finish busboy")
+        logger.info("finish busboy")
         // if (Object.keys(uploads).length === 0) {
         //   response.status(200).send('success: 0 file upload');
         //   return;
         // }
         // console.log('finish : ' + JSON.stringify(uploads));
         // response.status(200).send(JSON.stringify(uploads));
-        response.status(200).send("finish uploading")
+
+        Promise.all(fileUploads)
+          .then(() => {
+            response.status(200).send("success to upload")
+          })
+          .catch((e) => {
+            logger.error("error while uploading", e)
+            response.status(500).send("error while uploading")
+          })
       })
       busboy.end(request.rawBody)
     } catch (e) {
-      functions.logger.error("error occur", e)
+      logger.error("error occur", e)
       response.status(200).send("error occur")
     }
   })
