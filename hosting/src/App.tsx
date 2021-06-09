@@ -11,6 +11,44 @@ const getVideoList = async (): Promise<string[]> => {
 }
 
 function App() {
+  const [uploadTo, setUploadTo] = useState<"firebase" | "drive">("drive")
+
+  return (
+    <div>
+      <ul>
+        <li>
+          <label>
+            <input
+              type={"radio"}
+              value={"drive"}
+              name={"upload_to"}
+              checked={uploadTo === "drive"}
+              onChange={() => setUploadTo("drive")}
+            />
+            Google Driveにアップロードする
+          </label>
+        </li>
+        <li>
+          <label>
+            <input
+              type={"radio"}
+              value={"firebase"}
+              name={"upload_to"}
+              checked={uploadTo === "firebase"}
+              onChange={() => setUploadTo("firebase")}
+            />
+            Firebaseにアップロードする
+          </label>
+        </li>
+      </ul>
+      {uploadTo === "firebase" && <FirebaseContent />}
+    </div>
+  )
+}
+
+export default App
+
+export const FirebaseContent = () => {
   const [progress, setProgress] = useState<number | null>(null)
   const [videos, setVideos] = useState<string[]>([])
 
@@ -19,7 +57,7 @@ function App() {
   }, [])
 
   return (
-    <div>
+    <>
       <p>
         動画をアップロードする
         <input
@@ -78,8 +116,6 @@ function App() {
           })}
         </ul>
       </p>
-    </div>
+    </>
   )
 }
-
-export default App
