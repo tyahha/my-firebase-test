@@ -73,7 +73,7 @@ export const GoogleDriveContent = () => {
               data.append(file.name, file)
 
               axios
-                .post("https://us-central1-fs31-test.cloudfunctions.net/uploadVideo", data, {
+                .post("https://asia-northeast1-fs31-test.cloudfunctions.net/uploadVideo", data, {
                   headers: {
                     "content-type": "multipart/form-data",
                   },
