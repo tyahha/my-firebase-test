@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react"
 
 import firebase from "firebase/app"
 import VideoPlayer from "./components/VideoJsPlayer"
+import axios from "axios"
 
 const getVideoList = async (): Promise<string[]> => {
   const list = await firebase.storage().ref("videos").list()
@@ -41,12 +42,58 @@ function App() {
           </label>
         </li>
       </ul>
+      {uploadTo === "drive" && <GoogleDriveContent />}
       {uploadTo === "firebase" && <FirebaseContent />}
     </div>
   )
 }
 
 export default App
+
+export const GoogleDriveContent = () => {
+  const [progress, setProgress] = useState<number | null>(null)
+
+  return (
+    <>
+      <p>
+        動画をアップロードする
+        <input
+          disabled={progress != null}
+          type={"file"}
+          onChange={(e) => {
+            const file = e.target.files && e.target.files[0]
+            if (!file) {
+              return
+            }
+
+            setProgress(0)
+
+            try {
+              const data = new FormData()
+              data.append(file.name, file)
+
+              axios
+                .post("https://us-central1-fs31-test.cloudfunctions.net/uploadVideo", data, {
+                  headers: {
+                    "content-type": "multipart/form-data",
+                  },
+                })
+                .then(() => alert("success"))
+                .catch((e) => {
+                  alert("error")
+                  console.error(e)
+                })
+            } finally {
+              e.target.value = ""
+              setProgress(null)
+            }
+          }}
+        />
+      </p>
+      <p>{progress != null && `アップロード進捗：${progress.toFixed(1)}％`}</p>
+    </>
+  )
+}
 
 export const FirebaseContent = () => {
   const [progress, setProgress] = useState<number | null>(null)

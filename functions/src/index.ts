@@ -7,9 +7,10 @@ import * as Busboy from "busboy"
 
 export const uploadVideo = functions.https.onRequest((request, response) => {
   //const drive = google.drive({ version: "v3" })
+  functions.logger.info("test log", 1)
 
   // CORS
-  if (request.method === "OPTION") {
+  if (request.method === "OPTIONS") {
     response.header("Access-Control-Allow-Origin", "*")
     response.header("Access-Control-Allow-Headers", "Content-Type")
     response.header("Access-Control-Allow-Methods", "POST")
@@ -22,28 +23,37 @@ export const uploadVideo = functions.https.onRequest((request, response) => {
     return
   }
 
-  const busboy = new Busboy({ headers: request.headers })
-  busboy.on("file", (fieldName, file, filename, encoding, mimetype) => {
-    functions.logger.info("----- upload file ------")
-    functions.logger.info("field name", fieldName)
-    functions.logger.info("filename", filename)
-    functions.logger.info("encoding", encoding)
-    functions.logger.info("mimetype", mimetype)
-  })
+  functions.logger.info("test log", 2)
 
-  functions.logger.info("Hello logs!", { structuredData: true })
-  response.send("Hello from Firebase!")
+  try {
+    const busboy = new Busboy({ headers: request.headers })
 
-  // This callback will be invoked after all uploaded files are saved.
-  busboy.on("finish", () => {
-    // if (Object.keys(uploads).length === 0) {
-    //   response.status(200).send('success: 0 file upload');
-    //   return;
-    // }
-    // console.log('finish : ' + JSON.stringify(uploads));
-    // response.status(200).send(JSON.stringify(uploads));
-    response.status(200).send("finish uploading")
-  })
+    functions.logger.info("test log", 3)
 
-  busboy.end(request.rawBody)
+    busboy.on("file", (fieldName, file, filename, encoding, mimetype) => {
+      functions.logger.info("----- upload file ------")
+      functions.logger.info("field name", fieldName)
+      functions.logger.info("filename", filename)
+      functions.logger.info("encoding", encoding)
+      functions.logger.info("mimetype", mimetype)
+    })
+
+    functions.logger.info("Hello logs!", { structuredData: true })
+    response.send("Hello from Firebase!")
+
+    // This callback will be invoked after all uploaded files are saved.
+    busboy.on("finish", () => {
+      // if (Object.keys(uploads).length === 0) {
+      //   response.status(200).send('success: 0 file upload');
+      //   return;
+      // }
+      // console.log('finish : ' + JSON.stringify(uploads));
+      // response.status(200).send(JSON.stringify(uploads));
+      response.status(200).send("finish uploading")
+    })
+    busboy.end(request.rawBody)
+  } catch (e) {
+    functions.logger.error("error occur", e)
+    response.status(200).send("error occur")
+  }
 })

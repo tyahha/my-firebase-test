@@ -1,4 +1,5 @@
 import "firebase/storage"
+import "firebase/functions"
 import firebase from "firebase/app"
 
 const firebaseConfig = {
